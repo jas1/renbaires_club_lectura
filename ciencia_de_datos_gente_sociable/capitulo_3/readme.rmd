@@ -1,0 +1,45 @@
+# readme / leeme 
+
+para poder generar las presentaciones 
+hay que tener instalado el paquete xaringan
+que nos permite hacer presentaciones desde rmds
+
+como ? 
+
+```{r}
+install.packages("xaringan") # para poder hacer la presentacion desde rmd
+```
+
+luego tienen que abrir el "capitulo_3.rmd" y apretar "la bola de lana " 
+"knit" 
+
+o el atajo apretando las teclas a la vez: 
+CTRL + SHIFT + K
+
+
+Otros paquetes que usamos en la presentacion: 
+
+```{r}
+install.packages("tidyverse") # agrupador de muchos paquetes.
+install.packages("skimr") # para descripcion inicial # no viene en tidyverse
+
+# install.packages("readr") # ya viene con tidyverse # para lectura / escritura csvs
+# install.packages("dplyr") # ya viene con tidyverse # para transformaciones / explracion datos
+
+```
+
+un tip muy importante de las funciones: 
+
+pueden poner el signo de interrogacion final y el nombre de la funcion para ver la documentacion de esa funcion: 
+
+```{r}
+# ejemplo
+library('skimr')
+?skim
+```
+
+# video: 
+
+esta presentacion esta asociada a : 
+
+https://www.youtube.com/watch?v=tI6R7VWJS00

@@ -1,0 +1,269 @@
+---
+title: "capitulo_3_codigo"
+output: html_document
+---
+
+# Exploracion 1 ( poder levantarlos )
+
+```{r}
+library("tidyverse")
+# ojo que uso el read_csv del paquete readr, que esta dentro del tidyverse.
+atencion_ciudadano <- read_csv("http://bitsandbricks.github.io/data/gcba_suaci_barrios.csv")
+```
+
+# Exploracion 2  ( poder verlos ) 
+
+```{r}
+# mencion al read.csv del libro, stringsAsFactors = FALSE , hoy en dia viene por default en R 
+# esto es para que no nos tome las variables de caracter como categoricas de una. 
+
+str(atencion_ciudadano)
+
+glimpse(atencion_ciudadano)
+
+```
+# Exploracion 3:  poder entender un poco mas ... ( que columnas hay ? de que tipos ? que rangos manejan ? )
+
+una de mis preferidas es:  el paquete skimr, especificamente el metodo skim. 
+
+lo podemos llamar: 
+
+```{r}
+
+library("skimr")
+skim(atencion_ciudadano)
+
+```
+
+# Exploracion 4: entendiendo un poco mas  / hay validaciones ?
+
+si lo levantamos como factor, tenemos resutlados como menciona el libro
+pero si lo levantamos como caracter ... nope ...
+
+```{r}
+levels(atencion_ciudadano$BARRIO)
+```
+y como podriamos ver esta columna categorica ?
+en mi exp ... suelo usar count cuento cuanto shay por categoria y me fijo si hay categorias raras ...
+
+```{r}
+rmarkdown::paged_table(count(atencion_ciudadano, BARRIO,sort = TRUE))
+```
+
+Nos queda preguntar por las validaciones de "NA ", o " ERRORNOHAYRESULTA" y "ERRORNOHAYRESULTADOS"
+
+En el medio de nuestro analisis ... nos hacen una nueva pregunta ... 
+
+
+# CUANTOS RECLAMOS DE ACERA ESTAN EN LOS BARRIOS DE LA COMUNA 15 ?
+
+
+
+Exploramos ... tenemos reclamos ? SI , tenemos aceras? SI.  tenemos barrios? SI , tenemos comunas ? .... 
+
+```{r}
+head(atencion_ciudadano)
+```
+
+
+
+Abrimos los Ojos grande ... vimos que no tenemos los datos de comuna en ninguna columna ... 
+
+# TOCA investigar / pedir ayuda ....  Revisemos los datos que nos sugirieron
+
+```{r}
+barrios_comunas <- read_csv("http://bitsandbricks.github.io/data/barrios_comunas.csv")
+glimpse(barrios_comunas)
+```
+
+
+# TOCA CRUZAR ! la operacion JOIN ! ( juntar :p )
+
+```{r}
+atencion_ciudadano <- left_join(atencion_ciudadano, barrios_comunas,by = "BARRIO")
+
+glimpse(atencion_ciudadano)
+## eeepa --- porque left join  ? 
+```
+
+
+
+Como lo juntamos ? con JOIN! ( juntar )
+
+buen existe un universo de joins ... depende que querramos hacer como vamos a cruzar ... 
+pero por el momento dejemoslo en que el que tenemos sirve :D
+
+si queremos expandir, TENEMOS MACHETE :D !
+
+[data wrangling cheatsheet :D  ](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf)
+
+Para nuestro proposito LOGRAMOS TENER LA COLUMNA !!!! Toca contestar la pregunta ! 
+
+CUANTOS RECLAMOS DE ACERA ESTAN EN LOS BARRIOS DE LA COMUNA 15 ?
+
+ufff me parece que vamos a tener que hacer algunas cosas mas ... 
+
+# ESPERA ! antes de seguir como locos, GRABEMOS ! una tarea SUPER IMPORTANTE ! 
+
+si te olvidas de grabar, y se te acabo la bateria de la notebook ... perdiste toooooooodo, tenes que ejecutar todo devuelta D: ! 
+siempre que grabemos , verifiquemos, no queermos tener que enterarnos cuando ya cerramos todo :P !
+
+```{r}
+## grabando 
+write_csv(x=atencion_ciudadano, file = "cruce_barrio_comuna.csv")
+
+## verificando que esta bien grabado ! 
+atencion_ciudadano <- read_csv(file = "cruce_barrio_comuna.csv")
+
+```
+
+
+# Transformando los datos
+
+Familiaricemosnos con las funciones
+
+- select(): seleccionar -elegir- columnas por su nombre
+
+```{r}
+# del dataset que usemos, seleccionamos  2 columnas de interes , barrio y comuna
+select(atencion_ciudadano,BARRIO, COMUNA)
+
+# queremos seleccionar las demas menos comuna y barrio .. le ponemos un - adelante.
+select(atencion_ciudadano, -COMUNA,-BARRIO)
+
+```
+
+
+- filter(): filtrar, es decir quedarse sólo con las filas que cumplan cierta condición
+
+```{r}
+# del dataset: filtremos donde comuna sea 15
+filter (atencion_ciudadano,COMUNA == 15)
+```
+
+
+# y que sea 15 y sea reclamo
+
+```{r}
+filter (atencion_ciudadano,COMUNA == 15, TIPO_PRESTACION=='RECLAMO') 
+```
+
+
+
+
+- arrange(): ordenar las filas de acuerdo a su contenido o algún otro índice
+
+
+```{r}
+arrange (atencion_ciudadano,total)
+```
+
+```{r}
+arrange (atencion_ciudadano,desc(total))
+```
+
+- mutate(): mutar -cambiar- un dataframe, modificando el contenido de sus columnas o creando columnas (es decir, variables) nuevas
+
+```{r}
+# al dataset en cuestion le agrego una variable " total dividido 2 , que representa el calculo de lac olumna total dividido 2.
+
+atencion_ciudadano_div2 <- mutate(atencion_ciudadano, total_dividido_2= total / 2)
+atencion_ciudadano_div2
+```
+
+
+```{r}
+# tambien pueden crearse varias a la vez
+ejemplo_alterado <- mutate(atencion_ciudadano,
+       periodo_anio=substr(PERIODO, 1, 4),
+       periodo_mes=as.integer(substr(PERIODO, 5, 6)),# extraigo el mes y lo pongo como numero entero
+       total_dividido_2= total / 2)
+
+ejemplo_alterado
+```
+
+- summarise(): producir sumarios -un valor extraído de muchos, por ejemplo el promedio- con el contenido de las columnas
+
+
+```{r}
+# resumenes totales
+summarise(ejemplo_alterado,total_casos=sum(total))
+
+```
+
+```{r}
+# resumenes agrupados
+
+# primero elegijos la variable para agrupar
+paso_1_agrupar <- group_by( ejemplo_alterado, BARRIO) 
+
+# luego le decimos que operaciones utilizar.
+summarise(paso_1_agrupar,
+          cantidad_registros=n(),
+          total_casos=sum(total), 
+          minimo=min(periodo_mes),
+          maximo=max(periodo_mes),
+          ratio_casos_registros=total_casos/cantidad_registros)
+
+```
+
+# CUANTOS RECLAMOS DE ACERA ESTAN EN LOS BARRIOS DE LA COMUNA 15 ?
+
+veamos estos metodos en accion.
+filtremos reclamos: en la columna TIPO_PRESTACION,  : filter() 
+filtremos los especificos de de aceras: en la columna RUBRO. : filter() 
+filtremos por comuna 15: en la columna COMUNA, : filter() 
+agrupemos por barrio, la columna BARRIO : group_by()
+sumarisemos contando: n()
+
+```{r}
+
+datos_filtrados <- filter(atencion_ciudadano, 
+                          TIPO_PRESTACION=='RECLAMO',
+                          RUBRO=='ACERAS',
+                          COMUNA==15)
+
+
+datos_agrupados <- group_by(datos_filtrados,BARRIO)
+
+
+calclulo_barrios <- summarise(datos_agrupados,
+                              total_reclamos=sum(total))
+calclulo_barrios
+```
+
+
+
+- opcion 2: count()  ( que es una forma simplificada de: group by + summarise n)
+
+
+```{r}
+datos_filtrados %>% count(BARRIO,name = "total_reclamos")
+```
+no me da ! UY ! , que paso ? 
+
+es que CONTE los registros ! en vez de sumar la cantidad !
+asi que el count no me sirve aca ... pero podria servir para otras cosas :D !
+
+
+# YAPA ! el operador %>%  o "la pipa" o "el cañito"
+
+
+era medio largo el codigo anterior y con las vars intermedias era mas dificil ... 
+veamos como nos trata con " el cañito "
+
+```{r}
+atencion_ciudadano %>% # a este dataset
+   filter(TIPO_PRESTACION=='RECLAMO', # filtrale con las condiciones
+          RUBRO=='ACERAS',
+          COMUNA==15) %>% 
+  group_by(BARRIO) %>% # agrupa por barrios
+  summarise(total_reclamos = sum(total))  # sumarisa, sumando la columna totales por cada grupo
+
+```
+
+
+
+
+
+
